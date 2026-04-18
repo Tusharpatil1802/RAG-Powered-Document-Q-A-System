@@ -1,0 +1,26 @@
+# RAG Document Q&A System — Requirements
+# Install: pip install -r requirements.txt
+
+# Core RAG stack
+langchain>=0.2.16
+langchain-google-genai>=1.0.8
+langchain-community>=0.2.16
+langchain-chroma>=0.1.3
+
+# Vector store
+chromadb>=0.5.5
+
+# Document loaders
+pymupdf>=1.24.9           # PDF loading (PyMuPDFLoader)
+docx2txt>=0.8             # DOCX loading
+unstructured>=0.15.0      # Fallback loader
+
+# Gemini
+google-genai>=0.1.0
+
+# UI
+streamlit>=1.38.0
+
+# Utilities
+python-dotenv>=1.0.1      # .env support for local dev
+tiktoken>=0.7.0           # Accurate token counting (optional upgrade)
