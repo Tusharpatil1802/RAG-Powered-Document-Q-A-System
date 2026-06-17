@@ -1,18 +1,69 @@
 # RAG-Powered Document Q&A System
 
-A Streamlit app that lets you upload documents, build a local vector index, and ask grounded questions over the content using Gemini and ChromaDB.
+A recruiter-friendly demo of a practical Retrieval-Augmented Generation workflow: upload business documents, index them locally with vector search, and ask grounded questions through a polished Streamlit interface.
+
+## Why This Project Stands Out
+
+- Solves a real product problem: turning unstructured documents into a searchable Q&A experience
+- Shows end-to-end LLM engineering, not just prompting
+- Uses source-grounded retrieval to reduce hallucinations
+- Balances UX, application logic, and AI integration in one portfolio project
+
+## What This Demonstrates
+
+- Building a multi-file ingestion pipeline for `PDF`, `DOCX`, and `TXT`
+- Chunking and embedding documents for semantic retrieval
+- Using `Gemini` for both embeddings and answer generation
+- Persisting a local vector database with `ChromaDB`
+- Designing a lightweight UI for demos, iteration, and explainability
+
+## Screenshots
+
+### App Overview
+
+![DocMind landing view](docs/screenshots/docmind-overview.svg)
+
+### Retrieved Answer With Sources
+
+![DocMind answer view](docs/screenshots/docmind-answer-view.svg)
+
+## Architecture Diagram
+
+```mermaid
+flowchart LR
+    A[User Uploads PDF DOCX TXT] --> B[Document Loaders]
+    B --> C[Text Cleaning]
+    C --> D[Chunking with Overlap]
+    D --> E[Gemini Embeddings]
+    E --> F[ChromaDB Vector Store]
+
+    G[User Question] --> H[Similarity Retrieval Top-K]
+    F --> H
+    H --> I[Prompt Assembly with Chat History]
+    I --> J[Gemini Response Generation]
+    J --> K[Answer + Source Chunks in Streamlit UI]
+```
+
+## Demo Highlights
+
+- Upload multiple documents and turn them into a local knowledge base in one click
+- Adjust `chunk size`, `chunk overlap`, `top-k retrieval`, and `Gemini model` directly from the sidebar
+- Ask grounded natural-language questions against the indexed content
+- Inspect the exact retrieved chunks used to answer each query
+- Maintain short conversational continuity by including recent chat history in the prompt
 
 ## Overview
 
-This project demonstrates a practical Retrieval-Augmented Generation workflow:
+This app follows a practical RAG workflow:
 
-- upload `PDF`, `DOCX`, or `TXT` files
-- split them into searchable chunks
-- generate embeddings with Gemini
-- store vectors locally in ChromaDB
-- answer user questions with source-backed responses
+1. Load raw text from uploaded documents
+2. Split the content into searchable chunks
+3. Generate embeddings using Gemini
+4. Store vectors locally in ChromaDB
+5. Retrieve the most relevant chunks for each question
+6. Generate a grounded answer with visible source previews
 
-It is designed as a portfolio-friendly project that is small enough to understand quickly while still showing the full RAG pipeline end to end.
+It is intentionally compact enough to review quickly while still demonstrating the full RAG loop end to end.
 
 ## Features
 
@@ -44,17 +95,13 @@ RAG-Powered-Document-Q-A-System/
 │   └── sample_docs/
 │       └── acme_employee_handbook.txt
 ├── docs/
-│   └── RAG_Document_QA_Guide.pdf
+│   ├── RAG_Document_QA_Guide.pdf
+│   └── screenshots/
+│       ├── docmind-overview.svg
+│       └── docmind-answer-view.svg
 ├── requirements.txt
 ├── .env.example
 └── .gitignore
-```
-
-## How It Works
-
-```text
-Documents -> Load text -> Split into chunks -> Create embeddings -> Store in ChromaDB
-Question -> Retrieve top-k chunks -> Build prompt with context -> Gemini answer -> Show sources
 ```
 
 ## Setup
@@ -101,23 +148,27 @@ streamlit run app.py
 
 Open `http://localhost:8501` in your browser.
 
-## Sample Workflow
+## Suggested Demo Flow
 
-1. Launch the app.
-2. Add your Gemini API key.
-3. Upload one or more documents.
-4. Click `Build Knowledge Base`.
-5. Try the sample file in `data/sample_docs/acme_employee_handbook.txt`.
-6. Ask questions such as:
-   - `Summarize the main policies in this document.`
-   - `What does the handbook say about employee leave?`
-   - `Compare the onboarding steps across the uploaded files.`
+1. Launch the app and enter a Gemini API key.
+2. Upload the sample file in `data/sample_docs/acme_employee_handbook.txt` or bring your own documents.
+3. Click `Build Knowledge Base` to create the vector index.
+4. Ask a targeted question like `What does the handbook say about employee leave?`
+5. Expand the retrieved source chunks to show explainability and grounding.
+6. Change `top-k` or the Gemini model and demonstrate how retrieval depth affects answers.
+
+## Sample Questions
+
+- `Summarize the main policies in this document.`
+- `What does the handbook say about employee leave?`
+- `Which sections mention onboarding or responsibilities?`
+- `Compare the key points across the uploaded files.`
 
 ## Current Limitations
 
-- The app uses a simple chunking strategy without reranking.
-- Retrieval is semantic only; there is no hybrid keyword search yet.
-- The interface is optimized for demos and local experimentation, not multi-user deployment.
+- The app uses a simple chunking strategy without reranking
+- Retrieval is semantic only; there is no hybrid keyword search yet
+- The interface is optimized for demos and local experimentation, not multi-user deployment
 
 ## Improvement Ideas
 
@@ -126,15 +177,6 @@ Open `http://localhost:8501` in your browser.
 - Add document-level metadata filters
 - Add evaluation with RAGAS or custom benchmarks
 - Deploy with authentication and persistent cloud storage
-
-## Why This Repo Is Useful
-
-This project is a good example of:
-
-- applied LLM engineering
-- document intelligence workflows
-- retrieval-augmented generation design
-- rapid prototyping with modern GenAI tooling
 
 ## License
 

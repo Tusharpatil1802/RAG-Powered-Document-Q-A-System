@@ -1,0 +1,34 @@
+<svg width="1440" height="900" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="900" fill="#0B1220"/>
+  <rect x="32" y="32" width="1376" height="836" rx="28" fill="#111827" stroke="#243041" stroke-width="2"/>
+  <rect x="64" y="64" width="340" height="772" rx="24" fill="#0F172A"/>
+  <rect x="432" y="64" width="944" height="772" rx="24" fill="#111827"/>
+  <text x="96" y="122" fill="#E5E7EB" font-size="34" font-family="Arial, Helvetica, sans-serif" font-weight="700">Knowledge Base Stats</text>
+  <rect x="96" y="154" width="276" height="136" rx="20" fill="#172033" stroke="#314158"/>
+  <text x="120" y="206" fill="#93C5FD" font-size="22" font-family="Arial, Helvetica, sans-serif">Documents: 1</text>
+  <text x="120" y="242" fill="#93C5FD" font-size="22" font-family="Arial, Helvetica, sans-serif">Chunks: 14</text>
+  <text x="120" y="278" fill="#93C5FD" font-size="22" font-family="Arial, Helvetica, sans-serif">Avg tokens: 147</text>
+  <rect x="96" y="744" width="276" height="56" rx="18" fill="#1E293B"/>
+  <text x="174" y="780" fill="#F8FAFC" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="700">Clear Chat</text>
+  <text x="472" y="126" fill="#F8FAFC" font-size="44" font-family="Arial, Helvetica, sans-serif" font-weight="700">DocMind - Retrieved Answer</text>
+  <rect x="472" y="186" width="864" height="112" rx="24" fill="#0F172A" stroke="#243041"/>
+  <text x="506" y="238" fill="#93C5FD" font-size="22" font-family="Arial, Helvetica, sans-serif">User</text>
+  <text x="506" y="274" fill="#E2E8F0" font-size="24" font-family="Arial, Helvetica, sans-serif">What does the handbook say about employee leave?</text>
+  <rect x="472" y="326" width="864" height="228" rx="24" fill="#132033" stroke="#315278"/>
+  <text x="506" y="378" fill="#7DD3FC" font-size="22" font-family="Arial, Helvetica, sans-serif">Assistant</text>
+  <text x="506" y="420" fill="#F8FAFC" font-size="24" font-family="Arial, Helvetica, sans-serif">- Employees are eligible for annual leave after onboarding.</text>
+  <text x="506" y="456" fill="#F8FAFC" font-size="24" font-family="Arial, Helvetica, sans-serif">- Leave approval requires manager confirmation.</text>
+  <text x="506" y="492" fill="#F8FAFC" font-size="24" font-family="Arial, Helvetica, sans-serif">- The policy distinguishes sick leave and planned vacation.</text>
+  <text x="506" y="528" fill="#94A3B8" font-size="20" font-family="Arial, Helvetica, sans-serif">0.82s · 648 tokens · 4 chunks retrieved</text>
+  <rect x="472" y="582" width="864" height="170" rx="24" fill="#0F172A" stroke="#243041"/>
+  <text x="506" y="626" fill="#E5E7EB" font-size="28" font-family="Arial, Helvetica, sans-serif" font-weight="700">Source chunks used</text>
+  <rect x="506" y="648" width="382" height="76" rx="16" fill="#1A2233" stroke="#2E4A6A"/>
+  <rect x="920" y="648" width="382" height="76" rx="16" fill="#1A2233" stroke="#2E4A6A"/>
+  <text x="526" y="678" fill="#93C5FD" font-size="20" font-family="Arial, Helvetica, sans-serif">acme_employee_handbook.txt · chunk #3</text>
+  <text x="526" y="706" fill="#CBD5E1" font-size="18" font-family="Arial, Helvetica, sans-serif">Policy snippet preview with relevance score...</text>
+  <text x="940" y="678" fill="#93C5FD" font-size="20" font-family="Arial, Helvetica, sans-serif">acme_employee_handbook.txt · chunk #4</text>
+  <text x="940" y="706" fill="#CBD5E1" font-size="18" font-family="Arial, Helvetica, sans-serif">Additional evidence shown to the user...</text>
+  <rect x="472" y="776" width="864" height="44" rx="18" fill="#0F172A" stroke="#243041"/>
+  <text x="506" y="806" fill="#64748B" font-size="22" font-family="Arial, Helvetica, sans-serif">Ask a follow-up question about your documents...</text>
+  <text x="64" y="878" fill="#64748B" font-size="18" font-family="Arial, Helvetica, sans-serif">Illustrated UI preview showing answer grounding and source transparency</text>
+</svg>
