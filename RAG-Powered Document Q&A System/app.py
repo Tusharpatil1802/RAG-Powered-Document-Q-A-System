@@ -5,13 +5,31 @@ A production-ready Streamlit app for querying documents using RAG.
 Supports PDF, DOCX, and TXT files.
 """
 
-import streamlit as st
 import os
 import time
-from pathlib import Path
+import streamlit as st
+from dotenv import load_dotenv
 
 from rag_pipeline import RAGPipeline
-from utils import format_sources, estimate_tokens
+
+load_dotenv()
+
+
+def render_sources(sources):
+    """Render retrieved source chunks in a consistent card layout."""
+    for src in sources:
+        st.markdown(
+            f"""
+<div class="source-card">
+<strong>📄 {src['source']}</strong> &nbsp;
+<span class="metric-chip">chunk #{src['chunk_id']}</span>
+<span class="metric-chip">score: {src['score']:.2f}</span>
+<br/><br/>
+<em>{src['preview']}</em>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -64,13 +82,18 @@ if "doc_stats" not in st.session_state:
 # ── Sidebar ─────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("## ⚙️ Configuration")
+    env_api_key = os.getenv("GOOGLE_API_KEY", "")
 
     api_key = st.text_input(
         "Gemini API Key",
         type="password",
         placeholder="AIza...",
-        help="Get yours at aistudio.google.com"
+        help="Get yours at aistudio.google.com",
     )
+    effective_api_key = api_key or env_api_key
+
+    if env_api_key and not api_key:
+        st.caption("Using `GOOGLE_API_KEY` from your environment.")
 
     st.divider()
     st.markdown("### 📁 Upload Documents")
@@ -91,18 +114,21 @@ with st.sidebar:
                               help="Overlap between consecutive chunks")
     top_k = st.slider("Top-K chunks retrieved", 1, 10, 4,
                       help="How many chunks to retrieve per query")
-    model = st.selectbox("LLM", ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-1.5-pro", "gemini-2.5-pro"],
-                         help="Gemini flash models are extremely fast and ideal for RAG context.")
+    model = st.selectbox(
+        "LLM",
+        ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-1.5-pro", "gemini-2.5-pro"],
+        help="Gemini flash models are fast and work well for grounded RAG responses.",
+    )
 
     st.divider()
 
     if st.button("🚀 Build Knowledge Base", type="primary", use_container_width=True):
-        if not api_key:
-            st.error("Enter your Gemini API key first.")
+        if not effective_api_key:
+            st.error("Enter your Gemini API key or set GOOGLE_API_KEY first.")
         elif not uploaded_files:
             st.error("Upload at least one document.")
         else:
-            os.environ["GOOGLE_API_KEY"] = api_key
+            os.environ["GOOGLE_API_KEY"] = effective_api_key
             with st.spinner("Ingesting documents…"):
                 try:
                     rag = RAGPipeline(
@@ -149,22 +175,23 @@ if not st.session_state.docs_loaded:
         st.info("**Step 3** — Click 'Build Knowledge Base' and start asking")
     st.stop()
 
+with st.expander("Suggested questions"):
+    st.markdown(
+        """
+- What are the main responsibilities described in this document?
+- Summarize the policy changes mentioned across these files.
+- Which sections talk about employee leave or onboarding?
+- Compare the key points from each uploaded document.
+"""
+    )
+
 # ── Chat interface ──────────────────────────────────────────────────────────────
 for msg in st.session_state.chat_history:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
         if msg["role"] == "assistant" and "sources" in msg:
             with st.expander(f"📚 {len(msg['sources'])} source chunks used"):
-                for src in msg["sources"]:
-                    st.markdown(f"""
-<div class="source-card">
-<strong>📄 {src['source']}</strong> &nbsp;
-<span class="metric-chip">chunk #{src['chunk_id']}</span>
-<span class="metric-chip">score: {src['score']:.2f}</span>
-<br/><br/>
-<em>{src['preview']}</em>
-</div>
-""", unsafe_allow_html=True)
+                render_sources(msg["sources"])
 
 # ── Query input ─────────────────────────────────────────────────────────────────
 if prompt := st.chat_input("Ask anything about your documents…"):
@@ -187,16 +214,7 @@ if prompt := st.chat_input("Ask anything about your documents…"):
 
                 if result["sources"]:
                     with st.expander(f"📚 {len(result['sources'])} source chunks used"):
-                        for src in result["sources"]:
-                            st.markdown(f"""
-<div class="source-card">
-<strong>📄 {src['source']}</strong> &nbsp;
-<span class="metric-chip">chunk #{src['chunk_id']}</span>
-<span class="metric-chip">score: {src['score']:.2f}</span>
-<br/><br/>
-<em>{src['preview']}</em>
-</div>
-""", unsafe_allow_html=True)
+                        render_sources(result["sources"])
 
                 st.session_state.chat_history.append({
                     "role": "assistant",

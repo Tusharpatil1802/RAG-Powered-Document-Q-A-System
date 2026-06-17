@@ -6,8 +6,7 @@ Intentionally kept in one file for clarity and portfolio presentation.
 """
 
 import os
-import io
-import hashlib
+import shutil
 import tempfile
 from pathlib import Path
 from typing import List, Dict, Any, Optional
@@ -17,7 +16,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_community.document_loaders import (
     PyMuPDFLoader,
     TextLoader,
@@ -55,9 +54,9 @@ class RAGPipeline:
     End-to-end RAG pipeline with:
     - Multi-format document ingestion (PDF, DOCX, TXT)
     - Recursive text chunking with overlap
-    - OpenAI embeddings + ChromaDB vector store
+    - Gemini embeddings + ChromaDB vector store
     - Conversation-aware retrieval
-    - GPT-4o generation with source attribution
+    - Gemini generation with source attribution
     """
 
     def __init__(
@@ -65,9 +64,15 @@ class RAGPipeline:
         chunk_size: int = 512,
         chunk_overlap: int = 64,
         top_k: int = 4,
-        model: str = "gpt-4o-mini",
+        model: str = "gemini-1.5-flash",
         persist_directory: str = "./chroma_db",
     ):
+        google_api_key = os.environ.get("GOOGLE_API_KEY", "")
+        if not google_api_key:
+            raise ValueError(
+                "GOOGLE_API_KEY is missing. Set it in your environment or enter it in the app."
+            )
+
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.top_k = top_k
@@ -85,7 +90,7 @@ class RAGPipeline:
         # Embeddings
         self.embeddings = GoogleGenerativeAIEmbeddings(
             model="models/gemini-embedding-001",
-            google_api_key=os.environ.get("GOOGLE_API_KEY", ""),
+            google_api_key=google_api_key,
         )
 
         # LLM
@@ -93,7 +98,7 @@ class RAGPipeline:
             model=model,
             temperature=0.1,           # Low temp for factual, grounded answers
             max_tokens=1024,
-            google_api_key=os.environ.get("GOOGLE_API_KEY", ""),
+            google_api_key=google_api_key,
         )
 
         self.vectorstore: Optional[Chroma] = None
@@ -116,16 +121,26 @@ class RAGPipeline:
             raise ValueError("No content could be extracted from uploaded files.")
 
         # Split into chunks
-        chunks = self.splitter.split_documents(all_docs)
-
-        # Annotate each chunk with a sequential id per source
+        raw_chunks = self.splitter.split_documents(all_docs)
+        chunks: List[Document] = []
         source_counters: Dict[str, int] = {}
-        for chunk in chunks:
+        for chunk in raw_chunks:
+            cleaned_content = clean_text(chunk.page_content)
+            if not cleaned_content:
+                continue
+
             src = chunk.metadata.get("source", "unknown")
             source_counters[src] = source_counters.get(src, 0) + 1
+            chunk.page_content = cleaned_content
             chunk.metadata["chunk_id"] = source_counters[src]
             chunk.metadata["token_estimate"] = estimate_tokens(chunk.page_content)
-            chunk.page_content = clean_text(chunk.page_content)
+            chunks.append(chunk)
+
+        if not chunks:
+            raise ValueError("No usable text remained after processing the uploaded files.")
+
+        # Rebuild the collection from scratch so repeated ingests do not mix old and new data.
+        shutil.rmtree(self.persist_directory, ignore_errors=True)
 
         # Build / overwrite vector store
         self.vectorstore = Chroma.from_documents(
@@ -152,7 +167,7 @@ class RAGPipeline:
         Streamlit gives us BytesIO objects, so we write to a temp file first.
         """
         suffix = Path(uploaded_file.name).suffix.lower()
-        file_bytes = uploaded_file.read()
+        file_bytes = uploaded_file.getvalue()
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             tmp.write(file_bytes)
@@ -202,6 +217,13 @@ class RAGPipeline:
         results_with_scores = self.vectorstore.similarity_search_with_relevance_scores(
             question, k=self.top_k
         )
+        if not results_with_scores:
+            return {
+                "answer": "I couldn't find that in the uploaded documents.",
+                "sources": [],
+                "tokens_used": estimate_tokens(question),
+                "context_length": 0,
+            }
 
         # 2. Format context string
         context_parts = []
