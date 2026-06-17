@@ -11,7 +11,6 @@ import tempfile
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-# LangChain
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import Chroma
@@ -23,11 +22,10 @@ from langchain_community.document_loaders import (
     Docx2txtLoader,
 )
 
-from utils import estimate_tokens, clean_text
+from src.utils import estimate_tokens, clean_text
 
 
-# ── Prompts ─────────────────────────────────────────────────────────────────────
-SYSTEM_PROMPT = """You are DocMind, an expert document analyst. 
+SYSTEM_PROMPT = """You are DocMind, an expert document analyst.
 Answer questions strictly based on the provided context chunks.
 Rules:
 1. Only use information present in the context. Do not hallucinate.
@@ -79,7 +77,6 @@ class RAGPipeline:
         self.model = model
         self.persist_directory = persist_directory
 
-        # Text splitter — recursive tries paragraphs → sentences → words
         self.splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
@@ -87,24 +84,20 @@ class RAGPipeline:
             length_function=len,
         )
 
-        # Embeddings
         self.embeddings = GoogleGenerativeAIEmbeddings(
             model="models/gemini-embedding-001",
             google_api_key=google_api_key,
         )
 
-        # LLM
         self.llm = ChatGoogleGenerativeAI(
             model=model,
-            temperature=0.1,           # Low temp for factual, grounded answers
+            temperature=0.1,
             max_tokens=1024,
             google_api_key=google_api_key,
         )
 
         self.vectorstore: Optional[Chroma] = None
-        self.doc_registry: Dict[str, Dict] = {}  # filename → metadata
-
-    # ── INGESTION ───────────────────────────────────────────────────────────────
+        self.doc_registry: Dict[str, Dict] = {}
 
     def ingest_files(self, uploaded_files) -> Dict[str, Any]:
         """
@@ -120,7 +113,6 @@ class RAGPipeline:
         if not all_docs:
             raise ValueError("No content could be extracted from uploaded files.")
 
-        # Split into chunks
         raw_chunks = self.splitter.split_documents(all_docs)
         chunks: List[Document] = []
         source_counters: Dict[str, int] = {}
@@ -139,10 +131,8 @@ class RAGPipeline:
         if not chunks:
             raise ValueError("No usable text remained after processing the uploaded files.")
 
-        # Rebuild the collection from scratch so repeated ingests do not mix old and new data.
         shutil.rmtree(self.persist_directory, ignore_errors=True)
 
-        # Build / overwrite vector store
         self.vectorstore = Chroma.from_documents(
             documents=chunks,
             embedding=self.embeddings,
@@ -150,7 +140,6 @@ class RAGPipeline:
             collection_name="docmind_collection",
         )
 
-        # Compute stats
         avg_tokens = (
             sum(c.metadata["token_estimate"] for c in chunks) // len(chunks)
             if chunks else 0
@@ -185,7 +174,6 @@ class RAGPipeline:
 
             docs = loader.load()
 
-            # Tag all pages with the original filename
             for doc in docs:
                 doc.metadata["source"] = uploaded_file.name
                 doc.metadata["file_type"] = suffix.lstrip(".")
@@ -194,8 +182,6 @@ class RAGPipeline:
 
         finally:
             os.unlink(tmp_path)
-
-    # ── RETRIEVAL + GENERATION ──────────────────────────────────────────────────
 
     def query(
         self,
@@ -213,7 +199,6 @@ class RAGPipeline:
         if not self.vectorstore:
             raise RuntimeError("Knowledge base not built yet. Upload documents first.")
 
-        # 1. Retrieve relevant chunks (with similarity scores)
         results_with_scores = self.vectorstore.similarity_search_with_relevance_scores(
             question, k=self.top_k
         )
@@ -225,7 +210,6 @@ class RAGPipeline:
                 "context_length": 0,
             }
 
-        # 2. Format context string
         context_parts = []
         sources = []
         for i, (doc, score) in enumerate(results_with_scores):
@@ -236,32 +220,31 @@ class RAGPipeline:
             context_parts.append(
                 f"[Source: {src}, Chunk {chunk_id}]\n{doc.page_content}"
             )
-            sources.append({
-                "source": src,
-                "chunk_id": chunk_id,
-                "score": round(score, 3),
-                "preview": preview + ("…" if len(doc.page_content) > 200 else ""),
-            })
+            sources.append(
+                {
+                    "source": src,
+                    "chunk_id": chunk_id,
+                    "score": round(score, 3),
+                    "preview": preview + ("…" if len(doc.page_content) > 200 else ""),
+                }
+            )
 
         context = "\n\n---\n\n".join(context_parts)
 
-        # 3. Format chat history
         history_str = ""
         if chat_history:
             history_lines = []
-            for msg in chat_history[-6:]:   # last 3 turns
+            for msg in chat_history[-6:]:
                 role = "User" if msg["role"] == "user" else "Assistant"
                 history_lines.append(f"{role}: {msg['content'][:300]}")
             history_str = "\n".join(history_lines)
 
-        # 4. Build prompt
         user_prompt = RAG_PROMPT_TEMPLATE.format(
             context=context,
             chat_history=history_str or "No prior conversation.",
             question=question,
         )
 
-        # 5. Call LLM
         messages = [
             SystemMessage(content=SYSTEM_PROMPT),
             HumanMessage(content=user_prompt),
@@ -269,7 +252,6 @@ class RAGPipeline:
         response = self.llm.invoke(messages)
         answer = response.content
 
-        # Estimate tokens (rough)
         tokens_used = estimate_tokens(user_prompt) + estimate_tokens(answer)
 
         return {

@@ -10,7 +10,7 @@ import time
 import streamlit as st
 from dotenv import load_dotenv
 
-from rag_pipeline import RAGPipeline
+from src.rag_pipeline import RAGPipeline
 
 load_dotenv()
 

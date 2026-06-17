@@ -12,7 +12,7 @@ This project demonstrates a practical Retrieval-Augmented Generation workflow:
 - store vectors locally in ChromaDB
 - answer user questions with source-backed responses
 
-It is designed as a portfolio-friendly project that is small enough to understand quickly, while still showing the full RAG pipeline end to end.
+It is designed as a portfolio-friendly project that is small enough to understand quickly while still showing the full RAG pipeline end to end.
 
 ## Features
 
@@ -36,11 +36,18 @@ It is designed as a portfolio-friendly project that is small enough to understan
 ```text
 RAG-Powered-Document-Q-A-System/
 ├── app.py
-├── rag_pipeline.py
-├── utils.py
+├── src/
+│   ├── __init__.py
+│   ├── rag_pipeline.py
+│   └── utils.py
+├── data/
+│   └── sample_docs/
+│       └── acme_employee_handbook.txt
+├── docs/
+│   └── RAG_Document_QA_Guide.pdf
 ├── requirements.txt
 ├── .env.example
-└── acme_employee_handbook.txt
+└── .gitignore
 ```
 
 ## How It Works
@@ -100,7 +107,8 @@ Open `http://localhost:8501` in your browser.
 2. Add your Gemini API key.
 3. Upload one or more documents.
 4. Click `Build Knowledge Base`.
-5. Ask questions such as:
+5. Try the sample file in `data/sample_docs/acme_employee_handbook.txt`.
+6. Ask questions such as:
    - `Summarize the main policies in this document.`
    - `What does the handbook say about employee leave?`
    - `Compare the onboarding steps across the uploaded files.`
